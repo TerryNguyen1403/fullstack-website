@@ -1,0 +1,36 @@
+# =========================
+# Client - React
+# =========================
+
+client/node_modules/
+client/dist/
+client/.env
+client/.env.*
+
+# =========================
+# Server - Spring Boot
+# =========================
+
+server/target/
+server/.env
+
+# =========================
+# Eclipse
+# =========================
+
+server/.classpath
+server/.project
+server/.settings/
+
+# =========================
+# VS Code
+# =========================
+
+.vscode/
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
