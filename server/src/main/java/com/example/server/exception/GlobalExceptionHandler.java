@@ -10,17 +10,29 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.server.dto.ErrorResponseDTO;
+import com.example.server.dto.ValidationErrorResponseDTO;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ErrorResponseDTO> handleValidationErrors(MethodArgumentNotValidException ex) {
+	public ResponseEntity<ValidationErrorResponseDTO> handleValidationErrors(MethodArgumentNotValidException ex) {
 		// Lấy danh sách lỗi từ BindingResult, gộp "field: message"
 		List<String> errors = ex.getBindingResult().getFieldErrors().stream()
 				.map(err -> err.getField() + ": " + err.getDefaultMessage()).toList();
 
-		ErrorResponseDTO response = new ErrorResponseDTO(LocalDate.now(), HttpStatus.BAD_REQUEST.value(),
-				"Dữ liệu đầu vào không hợp lệ", errors);
+		ValidationErrorResponseDTO response = new ValidationErrorResponseDTO(LocalDate.now(),
+				HttpStatus.BAD_REQUEST.value(), "Dữ liệu đầu vào không hợp lệ", errors);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
+
+	@ExceptionHandler(DuplicateEmailException.class)
+	public ResponseEntity<ErrorResponseDTO> emailAlreadyExistsExceptionHandler(DuplicateEmailException e,
+			HttpServletRequest request) {
+		ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), e.getMessage(),
+				request.getRequestURI());
+
+		return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
 	}
 }

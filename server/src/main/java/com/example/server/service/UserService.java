@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import com.example.server.dto.UserCreationDTO;
 import com.example.server.dto.UserResponseDTO;
 import com.example.server.entity.User;
+import com.example.server.exception.DuplicateEmailException;
 import com.example.server.repository.UserRepository;
 
 @Service
@@ -33,6 +34,10 @@ public class UserService {
 	// Create
 	@Transactional
 	public UserResponseDTO createUser(UserCreationDTO request) {
+		boolean existing = userRepository.existsByEmail(request.email());
+		if (existing)
+			throw new DuplicateEmailException(
+					String.format("Email: %s đã tồn tại trong cơ sở dữ liệu", request.email()));
 		User user = new User();
 		user.setFirstName(request.firstName());
 		user.setLastName(request.lastName());
