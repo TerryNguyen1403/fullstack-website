@@ -35,4 +35,18 @@ public class GlobalExceptionHandler {
 
 		return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
 	}
+
+  @ExceptionHandler(EmailNotFoundException.class)
+  public ResponseEntity<ErrorResponseDTO> emailNotFoundExceptionHandler(EmailNotFoundException e, HttpServletRequest request) {
+    ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.NOT_FOUND.value(), e.getMessage(), request.getRequestURI());
+
+    return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(InvalidPasswordException.class)
+  public ResponseEntity<ErrorResponseDTO> invalidPasswordExceptionHandler(InvalidPasswordException e, HttpServletRequest request) {
+    ErrorResponseDTO body = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), e.getMessage(), request.getRequestURI());
+
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
 }
