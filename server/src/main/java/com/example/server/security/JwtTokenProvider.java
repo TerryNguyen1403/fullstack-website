@@ -3,6 +3,7 @@ package com.example.server.security;
 import com.example.server.entity.User;
 import com.example.server.entity.enums.Role;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,12 +41,25 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public Claims parseClaims(String token) {
+    private Claims parseClaims(String token) {
         return Jwts
                 .parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public boolean validateToken(String token) {
+      try {
+        parseClaims(token);
+        return true;
+      } catch (JwtException | IllegalArgumentException e) {
+        return false;
+      }
+    }
+
+    public String getSubjectFromToken(String token) {
+      return parseClaims(token).getSubject();
     }
 }
