@@ -9,6 +9,5 @@ public record UserLoginDTO(
         @Email(message = "Vui lòng nhập email")
         String email,
         @NotBlank(message = "Mật khẩu không được để trống")
-        @StrongPassword
         String password) {
 }
