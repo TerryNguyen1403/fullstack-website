@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
     private final SecretKey secretKey;
+    @Getter
     private final long expirationMs;
 
     // Constructor injection
@@ -59,7 +61,7 @@ public class JwtTokenProvider {
       }
     }
 
-    public String getSubjectFromToken(String token) {
+  public String getSubjectFromToken(String token) {
       return parseClaims(token).getSubject();
     }
 }

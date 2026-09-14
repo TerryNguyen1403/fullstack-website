@@ -1,6 +1,7 @@
 package com.example.server.controller;
 
-import com.example.server.dto.UserLoginDTO;
+import com.example.server.dto.LoginRequestDTO;
+import com.example.server.dto.LoginResponseDTO;
 import com.example.server.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,7 @@ public class AuthController {
   }
 
   @PostMapping("/log-in")
-  public String login(@Valid @RequestBody UserLoginDTO request) {
+  public LoginResponseDTO login(@Valid @RequestBody LoginRequestDTO request) {
     return authService.login(request);
   }
 }
