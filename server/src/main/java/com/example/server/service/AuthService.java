@@ -1,54 +1,64 @@
 package com.example.server.service;
 
-import com.example.server.dto.LoginRequestDTO;
-import com.example.server.dto.LoginResponseDTO;
-import com.example.server.entity.enums.Role;
-import com.example.server.repository.UserRepository;
-import com.example.server.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import com.example.server.dto.LoginRequestDTO;
+import com.example.server.dto.LoginResponseDTO;
+import com.example.server.entity.User;
+import com.example.server.entity.enums.RoleName;
+import com.example.server.exception.EmailNotFoundException;
+import com.example.server.repository.UserRepository;
+import com.example.server.security.JwtTokenProvider;
+
 @Validated
 @Service
 public class AuthService {
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
+	@Value("${JWT_ACCESS_EXPIRATION}")
+	private long accessTokenExpiryMs;
+	private final AuthenticationManager authenticationManager;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final UserRepository userRepository;
 
-    public AuthService(JwtTokenProvider jwtTokenProvider, AuthenticationManager authenticationManager) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.authenticationManager = authenticationManager;
-    }
+	public AuthService(JwtTokenProvider jwtTokenProvider, AuthenticationManager authenticationManager,
+			UserRepository userRepository) {
+		this.jwtTokenProvider = jwtTokenProvider;
+		this.authenticationManager = authenticationManager;
+		this.userRepository = userRepository;
+	}
 
-    public LoginResponseDTO login(LoginRequestDTO request) {
-        // 1. Đóng gói email + password thành một "yêu cầu xác thực"
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(request.email(), request.password());
+	public LoginResponseDTO login(LoginRequestDTO request) {
+		// 0. Kiểm tra email
+		// Nếu tồn tại -> tiếp tục flow else throw exception
+		User found = userRepository.findByEmail(request.email())
+				.orElseThrow(() -> new EmailNotFoundException("Email không tồn tại"));
 
-        // 2. Giao cho AuthenticationManager kiểm tra,
-        //      nếu sai throw BadCredentialException
-        Authentication authentication = authenticationManager.authenticate(authToken);
+		// 1. Đóng gói email + password thành một "yêu cầu xác thực"
+		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(request.email(),
+				request.password());
 
-        // 3. Xác thực thành công, lấy user đã được nạp
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        assert userDetails != null;
-        String authority = userDetails.getAuthorities().stream()
-                .findFirst().map(GrantedAuthority::getAuthority).orElseThrow();
+		// 2. Giao cho AuthenticationManager kiểm tra,
+		// nếu sai throw BadCredentialException
+		Authentication authentication = authenticationManager.authenticate(authToken);
 
-        Role role = Role.valueOf(authority.replace("ROLE_", ""));
+		// 3. Xác thực thành công, lấy user đã được nạp
+		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		assert userDetails != null;
+		RoleName roleName = found.getRole().getRoleName();
 
-        // 4. Sinh Jwt Token
-        String jwt = jwtTokenProvider.generateToken(userDetails.getUsername(), role);
-        long expiresIn = jwtTokenProvider.getExpirationMs();
+		// 4. Sinh Jwt Token
+		String jwt = jwtTokenProvider.generateToken(userDetails.getUsername(), roleName);
 
-        return new LoginResponseDTO(jwt, expiresIn);
-    }
+		return new LoginResponseDTO(jwt);
+	}
 
-    public boolean validateToken(String token) {
-      return jwtTokenProvider.validateToken(token);
-    }
+	public RoleName getRoleFromToken(String token) {
+		String validType = token.replace("Bearer ", "");
+		return jwtTokenProvider.getRoleFromToken(validType);
+	}
 }
