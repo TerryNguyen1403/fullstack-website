@@ -9,7 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import com.example.server.dto.LoginRequestDTO;
-import com.example.server.dto.LoginResponseDTO;
+import com.example.server.dto.LoginResultDto;
+import com.example.server.dto.RefreshTokenResponseDto;
 import com.example.server.entity.User;
 import com.example.server.entity.enums.RoleName;
 import com.example.server.exception.EmailNotFoundException;
@@ -24,15 +25,17 @@ public class AuthService {
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final UserRepository userRepository;
+	private final RefreshTokenService refreshTokenService;
 
 	public AuthService(JwtTokenProvider jwtTokenProvider, AuthenticationManager authenticationManager,
-			UserRepository userRepository) {
+			UserRepository userRepository, RefreshTokenService refreshTokenService) {
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.authenticationManager = authenticationManager;
 		this.userRepository = userRepository;
+		this.refreshTokenService = refreshTokenService;
 	}
 
-	public LoginResponseDTO login(LoginRequestDTO request) {
+	public LoginResultDto login(LoginRequestDTO request) {
 		// 0. Kiểm tra email
 		// Nếu tồn tại -> tiếp tục flow else throw exception
 		User found = userRepository.findByEmail(request.email())
@@ -54,7 +57,10 @@ public class AuthService {
 		// 4. Sinh Jwt Token
 		String jwt = jwtTokenProvider.generateToken(userDetails.getUsername(), roleName);
 
-		return new LoginResponseDTO(jwt);
+		// 5. Sinh refresh token
+		RefreshTokenResponseDto res = refreshTokenService.create(found);
+
+		return new LoginResultDto(jwt, res.rawToken(), res.expiryDate());
 	}
 
 	public RoleName getRoleFromToken(String token) {
