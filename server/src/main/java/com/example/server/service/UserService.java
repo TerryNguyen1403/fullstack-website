@@ -2,6 +2,8 @@ package com.example.server.service;
 
 import java.time.LocalDate;
 
+import com.example.server.security.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,14 +17,15 @@ import com.example.server.entity.User;
 import com.example.server.exception.DuplicateEmailException;
 import com.example.server.repository.UserRepository;
 
+@Slf4j
 @Service
 @Validated
 public class UserService {
 	// Constructor injection
-	private UserRepository userRepository;
-	private PasswordEncoder passwordEncoder;
+	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 
-	public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+	public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 	}
@@ -56,10 +59,8 @@ public class UserService {
 		user.setPassword(hashed);
 		User saved = userRepository.save(user);
 
-		UserResponseDTO res = new UserResponseDTO(saved.getId(), saved.getFirstName(), saved.getLastName(),
-				saved.getGender(), saved.getEmail(), saved.getPhoneNumber(), saved.getRole(), saved.getStatus(),
-				saved.getCreatedAt(), saved.getUpdatedAt());
-
-		return res;
+        return new UserResponseDTO(saved.getId(), saved.getFirstName(), saved.getLastName(),
+                saved.getGender(), saved.getEmail(), saved.getPhoneNumber(), saved.getRole(), saved.getStatus(),
+                saved.getCreatedAt(), saved.getUpdatedAt());
 	}
 }
