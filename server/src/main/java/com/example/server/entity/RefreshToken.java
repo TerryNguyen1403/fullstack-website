@@ -29,7 +29,7 @@ public class RefreshToken {
 	private User user;
 
 	@Column(name = "token_hash", nullable = false, unique = true, length = 64)
-	private String token;
+	private String tokenHash;
 
 	@Column(nullable = false)
 	private Instant expiryDate;

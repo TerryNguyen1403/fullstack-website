@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.server.dto.RefreshTokenResponseDto;
 import com.example.server.entity.RefreshToken;
 import com.example.server.entity.User;
+import com.example.server.exception.CustomeRefreshTokenException;
 import com.example.server.repository.RefreshTokenRepository;
 
 @Service
@@ -36,13 +37,36 @@ public class RefreshTokenService {
 		Instant now = Instant.now();
 
 		RefreshToken refreshToken = new RefreshToken();
-		refreshToken.setToken(sha256(rawToken));
+		refreshToken.setTokenHash(sha256(rawToken));
 		refreshToken.setCreatedAt(now);
 		refreshToken.setExpiryDate(now.plus(ttl));
 		refreshToken.setUser(user);
 		refreshTokenRepository.save(refreshToken);
 
 		return new RefreshTokenResponseDto(rawToken, refreshToken.getExpiryDate());
+	}
+
+	public RefreshToken validate(String token) {
+		// 1. Hash token trước khi query
+		String tokenHash = sha256(token);
+
+		// 2. Query và trả về entity
+		// Nếu sai -> throw exception
+		RefreshToken found = refreshTokenRepository.findByTokenHash(tokenHash)
+				.orElseThrow(() -> new CustomeRefreshTokenException("Token không hợp lệ"));
+
+		// 3.Validate
+		// 3.1 Throw exception nếu isRevoked = true
+		if (found.isRevoked())
+			throw new CustomeRefreshTokenException("Token đã bị thu hồi");
+
+		// 3.2 Throw exception nếu hết hạn
+		if (found.getExpiryDate().isBefore(Instant.now()))
+			throw new CustomeRefreshTokenException("Token hết hạn");
+
+		// 4. Không xảy ra bất cứ exception nào -> trả về true
+		return found;
+
 	}
 
 	private String generateRawToken() {
