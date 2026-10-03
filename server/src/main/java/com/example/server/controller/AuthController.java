@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.server.dto.LoginRequestDTO;
 import com.example.server.dto.LoginResponseDto;
 import com.example.server.dto.LoginResultDto;
-import com.example.server.entity.RefreshToken;
 import com.example.server.entity.enums.RoleName;
 import com.example.server.service.AuthService;
 
@@ -49,10 +48,9 @@ public class AuthController {
 				.body(new LoginResponseDto(result.token()));
 	}
 
-	@GetMapping("/validate")
-	public ResponseEntity<String> validate(@CookieValue(name = "refresh-token") String refreshToken) {
-		RefreshToken tokenEntity = authService.validate(refreshToken);
-		return ResponseEntity.ok("Token hợp lệ cho user: " + tokenEntity.getUser().getEmail());
+	@GetMapping("/refresh")
+	public ResponseEntity<String> refresh(@CookieValue(name = "refresh-token") String refreshToken) {
+		return ResponseEntity.status(200).body(authService.refresh(refreshToken));
 	}
 
 	@GetMapping("/getRole")

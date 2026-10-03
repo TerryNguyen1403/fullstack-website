@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.server.dto.RefreshTokenResponseDto;
 import com.example.server.entity.RefreshToken;
 import com.example.server.entity.User;
-import com.example.server.exception.CustomeRefreshTokenException;
+import com.example.server.exception.CustomRefreshTokenException;
 import com.example.server.repository.RefreshTokenRepository;
 
 @Service
@@ -53,16 +53,16 @@ public class RefreshTokenService {
 		// 2. Query và trả về entity
 		// Nếu sai -> throw exception
 		RefreshToken found = refreshTokenRepository.findByTokenHash(tokenHash)
-				.orElseThrow(() -> new CustomeRefreshTokenException("Token không hợp lệ"));
+				.orElseThrow(() -> new CustomRefreshTokenException("Token không hợp lệ"));
 
 		// 3.Validate
 		// 3.1 Throw exception nếu isRevoked = true
 		if (found.isRevoked())
-			throw new CustomeRefreshTokenException("Token đã bị thu hồi");
+			throw new CustomRefreshTokenException("Token đã bị thu hồi");
 
 		// 3.2 Throw exception nếu hết hạn
 		if (found.getExpiryDate().isBefore(Instant.now()))
-			throw new CustomeRefreshTokenException("Token hết hạn");
+			throw new CustomRefreshTokenException("Token hết hạn");
 
 		// 4. Không xảy ra bất cứ exception nào -> trả về true
 		return found;
